@@ -2,7 +2,7 @@ import path from "node:path";
 import { Client, Connection, WorkflowNotFoundError } from "@temporalio/client";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { SERVICE_MINUTES, STYLISTS, WAIT_LATER_MS, WAIT_SAME_DAY_MS } from "./salon";
-import { addOpeningId, getOpeningIds, getTexts, getWaitlist, resetAll } from "./store";
+import { addOpeningId, getOpeningIds, getTexts, getWaitlist, resetAll, saveWaitlist } from "./store";
 import type { OpeningInput, OpeningStatus, ReplyAnswer, ReplyResult } from "./types";
 import { assignByHand, clientReply, getOpeningStatus, openingWorkflow, simulateNoReply, stopOpening, takeOffOpening } from "./workflows";
 
@@ -71,16 +71,22 @@ app.get("/api/openings", async (_request, response) => {
 app.post("/api/reply", async (request, response) => {
   const { clientId, answer } = request.body as { clientId: string; answer: ReplyAnswer };
   const lastOffer = [...getTexts()].reverse().find((t) => t.clientId === clientId && t.kind === "offer");
+  // R42: STOP always takes the client off the list, even with no open offer.
+  const optOut = (): ReplyResult => {
+    saveWaitlist(getWaitlist().filter((c) => c.id !== clientId));
+    return { outcome: "opted out", message: "Replied STOP and was taken off the list. No more texts." };
+  };
   if (!lastOffer) {
-    response.json({ outcome: "not offered", message: "This client hasn't been sent an offer yet." } satisfies ReplyResult);
+    response.json(answer === "stop" ? optOut() : ({ outcome: "not offered", message: "This client hasn't been sent an offer yet." } satisfies ReplyResult));
     return;
   }
   const client = await getClient();
   try {
     const result = await client.workflow.getHandle(lastOffer.openingId).executeUpdate(clientReply, { args: [{ clientId, answer }] });
     response.json(result);
-  } catch {
-    response.json({ outcome: "no longer available", message: "That opening has already closed." } satisfies ReplyResult);
+  } catch (error) {
+    if (!(error instanceof WorkflowNotFoundError) && !/already completed|not found/i.test(String(error))) throw error;
+    response.json(answer === "stop" ? optOut() : ({ outcome: "no longer available", message: "That opening has already closed." } satisfies ReplyResult));
   }
 });
 

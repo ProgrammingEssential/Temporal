@@ -16,7 +16,7 @@ Status: **Built** / **Simulated** (works in the demo; a real outside service wou
 | R9 | "Most cancellations are inside 48 hours, around 8 to 12 a week" | 2 | Same-day and tomorrow openings handled with different waits | Simulation scenarios 1 and 2 | Built |
 | R10 | "Haircuts, color, and blowouts … 30 minutes to about three hours" | 2 | These three services, with lengths from R13/R39 | `SERVICE_MINUTES` | Built |
 | R11 | "Five stylists including me" | 2 | Five stylists: Lena plus four labelled samples | Stylist dropdown | Built (names other than Lena are samples) |
-| R12 | "Stylists mainly need to know when their chair is filled or canceled" | 2 | Notice: "Lena's chair is filled" on the staff screen | Staff screen notices | Simulated (calendar not connected) |
+| R12 | "Stylists mainly need to know when their chair is filled or canceled" | 2 | Notice: "Lena's chair is filled" on the staff screen. Cancellations still reach stylists through Square as today | Staff screen notices | Simulated (calendar not connected) |
 | R13 | "Haircuts … 45 minutes, blowouts about an hour, color two to three hours" | 3 | 45 / 60 / 180 minutes | `SERVICE_MINUTES` | Built |
 | R14 | "A shorter opening generally isn't suitable for a longer service" | 3 | Client skipped if their service is longer than the gap; reason shown | "Not offered and why"; test "matching" | Built |
 | R15 | "I'd wait about 15 minutes for a same-day opening" | 3 | 15-minute durable hold for same-day openings | Held until column; test 2 | Built |
@@ -37,8 +37,8 @@ Status: **Built** / **Simulated** (works in the demo; a real outside service wou
 | R30 | "I don't have set quiet hours or a firm cutoff" | 5 | No quiet hours, no cut-off | — | Built (none needed) |
 | R31 | "Leave out online booking, deposits, no-show fees, and reports" | 5 | Not built | README, slides | Not included (her request) |
 | R32 | "No special short-notice exclusions or different client priorities" | 5 | Everyone ordered the same way (earliest first) | `matchWaitlist` | Built |
-| R33 | "Carla or I should be able to stop the process, remove someone, or assign the opening manually" | 5 | Buttons: Stop filling, Take off, Give it to them by hand | Staff screen; test 5 | Built |
-| R34 | "If someone doesn't want texts anymore, we should take them off the list" | 5 | STOP takes them off the list | Phone panel; test 4 | Built |
+| R33 | "Carla or I should be able to stop the process, remove someone, or assign the opening manually" | 5 | Buttons: Stop filling, Take off (the person holding the offer, for this opening), Give it to them by hand (also after "couldn't be filled"). Removing someone from the whole list happens via STOP or a booking | Staff screen; tests 5 and 6 | Built |
+| R34 | "If someone doesn't want texts anymore, we should take them off the list" | 5 | STOP takes them off the list, whether or not an offer is open | Phone panel; test 4 | Built |
 | R35 | "The stylists work different schedules, not all five every day" | 5 | Staff enter openings for a stylist's own cancelled slot, so schedules aren't needed | — | Not included (no schedules given) |
 | R36 | "That summary sounds right" (late yes told no longer available) | 6 | As R19 | Simulation 1 | Built |
 | R37 | "A preferred stylist should be treated as required unless the client has said they're flexible" | 6 | Skipped with "Wants X only" unless flexible | "Not offered and why"; test "matching" | Built |
@@ -49,4 +49,4 @@ Status: **Built** / **Simulated** (works in the demo; a real outside service wou
 | R42 | "Replying 'STOP' should remove them from the list" | 8 | STOP removes them; no more texts | Test 4; simulation 3 | Built |
 | R43 | "Once they accept, they should come off the waitlist" | 9 | Booked client removed from the list | Waitlist table; test 2 | Built |
 | R44 | "They should get an automatic confirmation, and the front desk should see it too" | 9 | Confirmation text + staff notice | Phone panel; notices | Built (text simulated) |
-| R45 | "If nobody accepts, Carla or I should be notified that it couldn't be filled" | 9 | "Couldn't be filled" notice on the staff screen | Simulation 3; test 4 | Built |
+| R45 | "If nobody accepts, Carla or I should be notified that it couldn't be filled" | 9 | "Couldn't be filled" notice on the staff screen; staff can still book by hand, and a later yes still fills it while the time is ahead | Simulation 3; test 4 | Built |

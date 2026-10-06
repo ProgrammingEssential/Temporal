@@ -13,7 +13,7 @@ process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "juniper-sim-"));
 Runtime.install({ logger: new DefaultLogger("ERROR") });
 
 import * as activities from "../src/activities";
-import { fmtWhen, WAIT_LATER_MS, WAIT_SAME_DAY_MS } from "../src/salon";
+import { fmtWhen, matchWaitlist, WAIT_LATER_MS, WAIT_SAME_DAY_MS } from "../src/salon";
 import { getTexts, getWaitlist } from "../src/store";
 import type { OpeningStatus, ReplyAnswer } from "../src/types";
 import { assignByHand, clientReply, getOpeningStatus, openingWorkflow } from "../src/workflows";
@@ -120,10 +120,12 @@ async function main(): Promise<void> {
       await noReply(h, WAIT_SAME_DAY_MS);
       await finish(h);
 
-      // 4. Same-day 1 hour with Sample stylist B at 11 am: while someone holds it, staff book another client by hand.
-      h = await open("sim-4-stylist-b-today-11am", "Sample stylist B", at(day0.getTime(), 0, 11), 60);
+      // 4. Same-day 3 hours with Lena at 11 am: while someone holds it, staff book another client who fits by hand.
+      const start4 = at(day0.getTime(), 0, 11);
+      h = await open("sim-4-lena-today-11am", "Lena", start4, 180);
       o = await nextHolder(h);
-      const byHand = getWaitlist().find((c) => c.id !== o?.clientId && c.service === "Blowout")!;
+      const input4 = { openingId: "sim-4-lena-today-11am", stylist: "Lena", startMs: start4, lengthMinutes: 180, tzOffsetMinutes: tz, waitSameDayMs: WAIT_SAME_DAY_MS, waitLaterMs: WAIT_LATER_MS };
+      const byHand = matchWaitlist(getWaitlist(), input4).fits.filter((c) => c.id !== o?.clientId).at(-1)!;
       log(`  Staff give the opening to ${byHand.name} by hand`);
       await h.signal(assignByHand, byHand.id);
       await finish(h);

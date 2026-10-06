@@ -109,7 +109,7 @@ test("only one person gets the opening, and a failed text is retried once then s
   });
 });
 
-test("tomorrow's opening waits 1 hour per person; nobody accepts -> staff told it couldn't be filled; STOP opts out", async () => {
+test("tomorrow's opening waits 1 hour per person; nobody accepts -> staff told it couldn't be filled; STOP opts out; a later yes still fills it", async () => {
   await withEnv(async (env) => {
     const start = afternoon(await env.currentTimeMs(), 1, 18); // tomorrow evening, 45 min with Sample stylist C
     const h = await env.client.workflow.start(openingWorkflow, { workflowId: "t3", taskQueue: "test", args: [opening("t3", "Sample stylist C", start, 45)] });
@@ -121,6 +121,10 @@ test("tomorrow's opening waits 1 hour per person; nobody accepts -> staff told i
     for (let i = 0; i < 6; i++) await env.sleep(61 * MIN);
     const done = await until(h, (s) => s.phase === "not filled");
     assert.ok(done.notices.some((n) => n.startsWith("Couldn't be filled")));
+    // Nobody took it and it's still ahead: a client who timed out can still say yes and get it.
+    const late = await h.executeUpdate(clientReply, { args: [{ clientId: "c7", answer: "yes" }] });
+    assert.equal(late.outcome, "booked");
+    assert.equal((await until(h, (s) => s.phase === "filled")).booked?.name, "Hana Ito");
   });
 });
 
@@ -150,7 +154,7 @@ test("one booking per client: a client holding one opening isn't offered or book
     const s = await until(b, holding("Ben Carter"));
     assert.equal(s.skipped.find((k) => k.name === "Ava Brooks")?.reason, "Currently holding another opening");
     await b.signal(assignByHand, "c1");
-    const after = await until(b, (x) => x.notices.some((n) => n.startsWith("Couldn't book Ava Brooks by hand")));
+    const after = await until(b, (x) => x.notices.some((n) => n.includes("holding another opening")));
     assert.equal(after.phase, "offering");
     assert.equal((await a.executeUpdate(clientReply, { args: [{ clientId: "c1", answer: "yes" }] })).outcome, "booked");
     assert.equal((await until(a, (x) => x.phase === "filled")).booked?.name, "Ava Brooks");

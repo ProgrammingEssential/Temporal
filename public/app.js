@@ -60,15 +60,15 @@ function renderOpening(s) {
     </div>
     <p class="message">${esc(s.message)}</p>
     ${rows ? `<table><thead><tr><th>Contacted</th><th>Service</th><th>What happened</th><th>Texted</th><th>Held until</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="hint">Nobody contacted yet.</p>`}
-    ${s.skipped.length ? `<details><summary>Not offered (${s.skipped.length}) and why</summary><ul>${s.skipped.map((k) => `<li>${esc(k.name)}: ${esc(k.reason)}</li>`).join("")}</ul></details>` : ""}
+    ${s.skipped.length ? `<details data-for="${s.openingId}"><summary>Not offered (${s.skipped.length}) and why</summary><ul>${s.skipped.map((k) => `<li>${esc(k.name)}: ${esc(k.reason)}</li>`).join("")}</ul></details>` : ""}
     ${s.notices.length ? `<ul class="notices">${s.notices.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
     ${
-      open
+      open || s.phase === "not filled"
         ? `<div class="actions">
         ${holder ? `<button class="ghost" data-act="simulate-no-reply" data-id="${s.openingId}">Simulate: no reply (skip the wait)</button>` : ""}
         <select data-assign-for="${s.openingId}">${assignable}</select>
         <button class="ghost" data-act="assign" data-id="${s.openingId}">Give it to them by hand</button>
-        <button class="secondary" data-act="stop" data-id="${s.openingId}">Stop filling</button>
+        ${open ? `<button class="secondary" data-act="stop" data-id="${s.openingId}">Stop filling</button>` : ""}
       </div>`
         : ""
     }
@@ -85,7 +85,14 @@ async function refresh() {
     const assignChoice = {};
     document.querySelectorAll("[data-assign-for]").forEach((el) => (assignChoice[el.dataset.assignFor] = el.value));
     renderWaitlist();
-    $("openings").innerHTML = openings.map(renderOpening).join("");
+    // Only redraw when something changed, so open menus and "Not offered and why" stay open.
+    const openingsHtml = openings.map(renderOpening).join("");
+    if ($("openings").dataset.html !== openingsHtml) {
+      const openDetails = new Set([...document.querySelectorAll("details[open]")].map((d) => d.dataset.for));
+      $("openings").innerHTML = openingsHtml;
+      $("openings").dataset.html = openingsHtml;
+      document.querySelectorAll("details").forEach((d) => openDetails.has(d.dataset.for) && (d.open = true));
+    }
     document.querySelectorAll("[data-assign-for]").forEach((el) => {
       if (assignChoice[el.dataset.assignFor]) el.value = assignChoice[el.dataset.assignFor];
     });
@@ -153,5 +160,8 @@ $("reset").addEventListener("click", async () => {
   refresh();
 });
 
-loadConfig().then(refresh);
-setInterval(refresh, 1500);
+async function poll() {
+  await refresh();
+  setTimeout(poll, 1500); // next poll only after this one finishes, so requests never pile up
+}
+loadConfig().then(poll);

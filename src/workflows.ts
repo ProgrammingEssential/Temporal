@@ -49,10 +49,20 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
   let stopRequested = false;
   let skipWait = false;
   let closed = false;
+  let lateClaim: string | undefined; // a late yes being checked
+  let lateBookId: string | undefined; // a late yes that can book an opening nobody took
   const takenOff = new Set<string>();
 
   const text = (row: { clientId: string; name: string; phone: string }, kind: TextKind, body: string) =>
     sendText({ atMs: now(), openingId: input.openingId, clientId: row.clientId, name: row.name, to: row.phone, kind, body });
+
+  /** One booking per client: only someone still on the list and not holding another opening can be booked. */
+  const whyNotBookable = async (clientId: string): Promise<string | null> => {
+    const c = (await loadWaitlist()).find((x) => x.id === clientId);
+    if (!c) return "they're no longer on the waitlist";
+    if (c.heldByOpening && c.heldByOpening !== input.openingId) return "they're holding another opening right now";
+    return null;
+  };
 
   setHandler(getOpeningStatus, () => status);
   setHandler(stopOpening, () => void (stopRequested = true));
@@ -60,7 +70,7 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
   setHandler(simulateNoReply, () => void (skipWait = true));
   setHandler(takeOffOpening, (clientId) => {
     takenOff.add(clientId);
-    if (current?.clientId === clientId) current.outcome = "taken off by staff";
+    if (current?.clientId === clientId && current.outcome === "holding the offer") current.outcome = "taken off by staff";
   });
 
   // R22: clients text back YES, NO or STOP (R42). Only the client holding the offer can book it (R29), so two
@@ -85,6 +95,16 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
       bookedId = clientId; // set before any await: the main loop sees it at once
       row.outcome = "said yes - booked";
       return { outcome: "booked", message: `${row.name} got the opening.` };
+    }
+    // The opening closed unfilled and is still ahead: a late yes can have it after all (more gaps filled, R27).
+    if (answer === "yes" && closed && status.phase === "not filled" && lateClaim === undefined && lateBookId === undefined && now() < input.startMs) {
+      lateClaim = clientId; // set before any await: a second late yes can't claim it too
+      if (!(await whyNotBookable(clientId))) {
+        lateBookId = clientId;
+        row.lateReply = "said yes later, while the opening was still free - booked";
+        return { outcome: "booked", message: `${row.name} got the opening (it was still free).` };
+      }
+      lateClaim = undefined;
     }
     if (answer === "yes") {
       row.lateReply = "said yes after their turn - told no longer available";
@@ -153,9 +173,9 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
   }
   // One booking per client: staff can only book someone still on the list and not holding another opening.
   if (bookedId === undefined && !stopRequested && manualId !== undefined) {
-    const chosen = (await loadWaitlist()).find((c) => c.id === manualId);
-    if (!chosen || (chosen.heldByOpening && chosen.heldByOpening !== input.openingId)) {
-      status.notices.push(`Couldn't book ${chosen?.name ?? "that client"} by hand: ${chosen ? "they're holding another opening right now" : "they're no longer on the waitlist"}. Carrying on with the list.`);
+    const reason = await whyNotBookable(manualId);
+    if (reason) {
+      status.notices.push(`Couldn't book that client by hand: ${reason}. Carrying on with the list.`);
       manualId = undefined;
       continue;
     }
@@ -197,9 +217,28 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
   }
   closed = true;
 
-  // Stay open until the appointment time so a late yes still gets a polite "no longer available" (R36).
-  const untilStart = input.startMs - now();
-  if (untilStart > 0) await condition(() => false, untilStart);
+  // Stay open until the appointment time: a late yes gets a polite "no longer available" (R36), unless nobody took
+  // the opening, in which case a late yes or a staff booking by hand can still fill it.
+  for (;;) {
+    const left = input.startMs - now();
+    if (left <= 0) break;
+    if (status.phase !== "not filled") {
+      await condition(() => false, left);
+      break;
+    }
+    if (!(await condition(() => lateBookId !== undefined || manualId !== undefined, left))) break;
+    if (lateBookId !== undefined) {
+      await book(lateBookId, "client");
+      continue;
+    }
+    const reason = await whyNotBookable(manualId!);
+    if (reason) {
+      status.notices.push(`Couldn't book that client by hand: ${reason}.`);
+      manualId = undefined;
+      continue;
+    }
+    await book(manualId!, "staff");
+  }
   await condition(allHandlersFinished);
   return status;
 }

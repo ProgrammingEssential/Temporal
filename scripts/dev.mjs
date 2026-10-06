@@ -35,7 +35,11 @@ let shuttingDown = false;
 function shutdown(exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
-  for (const child of children) child.kill("SIGTERM");
+  for (const child of children) {
+    // On Windows the child is a shell; kill its whole process tree so the API and Worker stop too.
+    if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" });
+    else child.kill("SIGTERM");
+  }
   process.exit(exitCode);
 }
 process.on("SIGINT", () => shutdown(0));

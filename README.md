@@ -21,7 +21,7 @@ npm install && npm run dev
 
 1. On http://localhost:3000, pick a stylist, a time later today and a length, then click **Start filling it**. The first matching client is texted (see the phone on the right) and holds the opening for 15 minutes (1 hour if the opening is tomorrow or later).
 2. Click **Simulate: no reply (skip the wait)**, so you don't have to wait 15 minutes. The offer moves to the next client by itself.
-3. On the phone, choose that client and click **Reply YES**. The opening is booked, a confirmation text appears, and they come off the waitlist. Now choose the first client and reply YES: they're told it's no longer available.
+3. On the phone, choose that client and click **Reply YES**. The opening is booked, a confirmation text appears, and they come off the waitlist. Now choose the first client and reply YES: they're told it's no longer available. (If an opening ends up *not* filled, a later YES, or **Give it to them by hand**, still fills it.)
 
 The staff screen also has **Give it to them by hand**, **Take off** (for the person holding the offer) and **Stop filling**. Sample number 555-0199 always fails to text (retried once, then skipped); 555-0142 fails once and the retry works.
 
@@ -36,7 +36,6 @@ npm run simulate   # plays 4 openings with the real rules; 15-minute and 1-hour 
 Output of `npm run simulate` (every line comes from the process's own state or a reply result):
 
 ```text
-
 Simulated clock: Tue 6 Oct, 8:30 am. Waitlist: 9 sample clients.
 
 === sim-1-lena-today-2pm: Lena, Tue 6 Oct, 2:00 pm, 60 min ===
@@ -80,15 +79,15 @@ Simulated clock: Tue 6 Oct, 8:30 am. Waitlist: 9 sample clients.
   ! For Lena and Carla: Couldn't be filled: opening with Sample stylist C on Tue 6 Oct, 5:00 pm. Everyone who matches has been asked.
   RESULT: not filled. Everyone who matches has been asked.
 
-=== sim-4-stylist-b-today-11am: Sample stylist B, Tue 6 Oct, 11:00 am, 60 min ===
+=== sim-4-lena-today-11am: Lena, Tue 6 Oct, 11:00 am, 180 min ===
   Chloe Diaz: text failed twice - skipped
   Grace Kim is texted and holds the offer for 15 min
-  Staff give the opening to Iris Lowe by hand
+  Staff give the opening to Jon Moss by hand
   Grace Kim: offer ended - booked by staff
-  Not offered: Ava Brooks (Wants Lena only); Hana Ito (Wants Sample stylist C only); Iris Lowe (Only available Saturdays); Jon Moss (Color needs 180 min; this opening is 60 min)
+  Not offered: Ava Brooks (Not available in the morning (afternoon / evening)); Hana Ito (Wants Sample stylist C only); Iris Lowe (Only available Saturdays)
   ! For Lena and Carla: Text to Chloe Diaz (555-0199) didn't go through after a retry. Moved on to the next person.
-  ! For Lena and Carla: Booked Iris Lowe for blowout with Sample stylist B on Tue 6 Oct, 11:00 am (by staff). Confirmation text sent. Sample stylist B's chair is filled.
-  RESULT: filled. Booked: Iris Lowe (Blowout) with Sample stylist B on Tue 6 Oct, 11:00 am.
+  ! For Lena and Carla: Booked Jon Moss for color with Lena on Tue 6 Oct, 11:00 am (by staff). Confirmation text sent. Lena's chair is filled.
+  RESULT: filled. Booked: Jon Moss (Color) with Lena on Tue 6 Oct, 11:00 am.
 
 Waitlist now: 5 clients (booked clients and STOP replies are off the list).
 Simulated texts written: 12 (none really sent).
