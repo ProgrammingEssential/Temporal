@@ -1,4 +1,1 @@
-# Evidence
-
-Before submitting, replace this file or add an image in this directory showing one representative Workflow in the Temporal Web UI. The screenshot should make the Workflow ID, status, and meaningful event history visible without exposing real personal information.
-
+`workflow.png`: one opening (Lena, 60 min) in the Temporal Web UI: Workflow ID, status and event history showing the hold timers, the `clientReply` update (a late "yes" told "no longer available"), and a `sendText` activity retried on attempt 2. `staff-screen.png`: the same opening on the staff screen. Sample data only.
