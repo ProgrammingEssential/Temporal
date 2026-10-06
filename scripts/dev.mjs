@@ -28,8 +28,8 @@ async function waitForPort(port, timeoutMs = 60_000) {
 
 await waitForPort(7233);
 const children = [
-  spawn("npm", ["run", "dev:worker"], { stdio: "inherit" }),
-  spawn("npm", ["run", "dev:api"], { stdio: "inherit" }),
+  spawn("npm", ["run", "dev:worker"], { stdio: "inherit", shell: process.platform === "win32" }),
+  spawn("npm", ["run", "dev:api"], { stdio: "inherit", shell: process.platform === "win32" }),
 ];
 let shuttingDown = false;
 function shutdown(exitCode = 0) {
