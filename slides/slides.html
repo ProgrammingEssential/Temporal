@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Juniper Salon: open-spot filler</title>
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  :root {
+    --bg: #FBF8F4; --ink: #2B2622; --soft: #6B625A; --accent: #2F6F5E; --accent-2: #C77D4E;
+    --card: #FFFFFF; --line: #E7DED4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", Helvetica, Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 13.333in; height: 7.5in; padding: 0.7in 0.85in; position: relative;
+    page-break-after: always; break-after: page; overflow: hidden; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 15pt; margin: 0 0 8px; }
+  h1 { font-size: 36pt; line-height: 1.12; margin: 0 0 24px; max-width: 11in; }
+  p, li { font-size: 19pt; line-height: 1.4; }
+  ul { margin: 0; padding-left: 1.1em; } li { margin-bottom: 10px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45in; align-items: start; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.35in; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 26px; }
+  .card h3 { margin: 0 0 8px; font-size: 20pt; color: var(--accent); }
+  .card p { margin: 0; font-size: 16pt; color: var(--soft); }
+  .big, .card .big { font-size: 44pt; font-weight: 700; color: var(--accent); margin: 0; }
+  .steps { display: flex; gap: 14px; align-items: stretch; margin-top: 8px; }
+  .step { flex: 1; background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--accent); border-radius: 12px; padding: 16px 18px; }
+  .step b { display: block; font-size: 17pt; margin-bottom: 6px; } .step span { font-size: 14.5pt; color: var(--soft); }
+  .shot { width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+  .tag { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 13pt; font-weight: 700; }
+  .tag.real { background: #DCEFE7; color: #1F5A49; } .tag.sim { background: #F7E6D8; color: #8A4A22; } .tag.no { background: #ECE7E2; color: #5A524B; }
+  .foot { position: absolute; bottom: 0.35in; left: 0.85in; right: 0.85in; display: flex; justify-content: space-between; color: var(--soft); font-size: 12pt; }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <p class="eyebrow">What we heard</p>
+  <h1>Last-minute cancellations leave gaps, and filling them means a lot of texting back and forth.</h1>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>8 to 12 cancellations a week, most within 48 hours</li>
+        <li>You or Carla check the Google Sheet, then text several people at once</li>
+        <li>Someone says yes after the spot is taken, and follow-ups get forgotten when you're busy</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What matters most to you</h3>
+      <p>"Filling more gaps with less chasing and fewer mix-ups; avoiding mix-ups matters most."</p>
+    </div>
+  </div>
+  <div class="foot"><span>Juniper Salon</span><span>1 / 5</span></div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">How the prototype works</p>
+  <h1>One person at a time, and it keeps moving on its own.</h1>
+  <div class="steps">
+    <div class="step"><b>1. Spot opens</b><span>You or Carla enter it</span></div>
+    <div class="step"><b>2. Next client asked</b><span>Earliest on the list who fits</span></div>
+    <div class="step"><b>3. Held for them</b><span>15 min today, 1 hour later; then the next person</span></div>
+    <div class="step"><b>4. Booked</b><span>Confirmation text; off the list</span></div>
+  </div>
+  <p style="margin-top:22px;">You see who was texted, who declined or timed out, who holds it, and whether it's filled.</p>
+  <img class="shot" src="staff-crop.png" alt="Staff screen: one opening being filled, with the pretend client phone" style="width:auto;height:2.2in;align-self:flex-start;">
+  <div class="foot"><span>Juniper Salon</span><span>2 / 5</span></div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">When things go wrong</p>
+  <h1>Nobody can take a spot that's already gone, and nothing waits on a busy person.</h1>
+  <div class="cols3">
+    <div class="card"><h3>A late yes</h3><p>Only the person holding the spot can book it. Anyone else is told it's no longer available.</p></div>
+    <div class="card"><h3>A text doesn't go through</h3><p>It tries once more, then moves on and tells you.</p></div>
+    <div class="card"><h3>Nobody answers</h3><p>It moves on by itself. If nobody takes it, you're told it couldn't be filled.</p></div>
+  </div>
+  <div class="foot"><span>Juniper Salon</span><span>3 / 5</span></div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">What's real in this prototype</p>
+  <h1>The process works; the texts and clients are pretend.</h1>
+  <div class="cols3">
+    <div class="card"><h3><span class="tag real">Working</span></h3><p>Order and matching, waiting, moving on, one booking only, clients texting STOP to opt out, staff stop / remove / book by hand</p></div>
+    <div class="card"><h3><span class="tag sim">Simulated</span></h3><p>Texts appear on a pretend phone, not sent. Sample clients and stylist names</p></div>
+    <div class="card"><h3><span class="tag no">Not included yet</span></h3><p>Square and calendars not connected. Online booking, deposits, no-show fees, reports: left for later, as you asked</p></div>
+  </div>
+  <div class="foot"><span>Juniper Salon</span><span>4 / 5</span></div>
+</section>
+
+<section class="slide">
+  <p class="eyebrow">Next step</p>
+  <h1>Try it for two weeks with real cancellations and real texts.</h1>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>We connect a texting service (for example Twilio) to send from the salon's number</li>
+        <li>You give us stylist names and copy the Google Sheet in</li>
+        <li>Carla enters each cancellation; we review together after two weeks</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>How we'll know it worked</h3>
+      <p class="big">0 mix-ups</p>
+      <p>and a count of how many of your 8 to 12 weekly cancellations get filled</p>
+    </div>
+  </div>
+  <div class="foot"><span>Juniper Salon</span><span>5 / 5</span></div>
+</section>
+
+</body>
+</html>
