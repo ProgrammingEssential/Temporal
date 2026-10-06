@@ -28,7 +28,7 @@ The staff screen also has **Give it to them by hand**, **Take off** (for the per
 ## Tests and simulation
 
 ```bash
-npm test           # 5 tests on Temporal's time-skipping test server (no Docker needed)
+npm test           # 6 tests on Temporal's time-skipping test server (no Docker needed)
 npm run typecheck
 npm run simulate   # plays 4 openings with the real rules; 15-minute and 1-hour waits pass in seconds
 ```

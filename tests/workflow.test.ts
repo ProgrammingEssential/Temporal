@@ -37,7 +37,15 @@ async function withEnv(run: (env: TestWorkflowEnvironment) => Promise<void>): Pr
   const env = await TestWorkflowEnvironment.createTimeSkipping();
   try {
     const worker = await Worker.create({ connection: env.nativeConnection, taskQueue: "test", workflowsPath: require.resolve("../src/workflows"), activities });
-    await worker.runUntil(() => run(env));
+    await worker.runUntil(async () => {
+      // Start every test at 8 am (UTC) tomorrow so results don't depend on when the tests are run.
+      const real = await env.currentTimeMs();
+      const morning = new Date(real);
+      morning.setUTCDate(morning.getUTCDate() + 1);
+      morning.setUTCHours(8, 0, 0, 0);
+      await env.sleep(morning.getTime() - real);
+      await run(env);
+    });
   } finally {
     await env.teardown();
   }
@@ -65,8 +73,7 @@ test("matching: service length, preferred stylist unless flexible, availability,
 
 test("no reply moves to the next client after 15 minutes (same day); a late yes is told no longer available", async () => {
   await withEnv(async (env) => {
-    const now = Date.now();
-    const start = afternoon(now, 0, 23); // later today
+    const start = afternoon(await env.currentTimeMs(), 0); // 2 pm today
     const h = await env.client.workflow.start(openingWorkflow, { workflowId: "t1", taskQueue: "test", args: [opening("t1", "Lena", start, 60)] });
     await until(h, holding("Ava Brooks"));
     await env.sleep(16 * MIN); // Ava doesn't answer
@@ -85,7 +92,7 @@ test("no reply moves to the next client after 15 minutes (same day); a late yes 
 
 test("only one person gets the opening, and a failed text is retried once then skipped", async () => {
   await withEnv(async (env) => {
-    const start = afternoon(Date.now(), 0, 23);
+    const start = afternoon(await env.currentTimeMs(), 0);
     const h = await env.client.workflow.start(openingWorkflow, { workflowId: "t2", taskQueue: "test", args: [opening("t2", "Lena", start, 60)] });
     await until(h, holding("Ava Brooks"));
     assert.equal((await h.executeUpdate(clientReply, { args: [{ clientId: "c1", answer: "no" }] })).outcome, "declined");
@@ -104,7 +111,7 @@ test("only one person gets the opening, and a failed text is retried once then s
 
 test("tomorrow's opening waits 1 hour per person; nobody accepts -> staff told it couldn't be filled; STOP opts out", async () => {
   await withEnv(async (env) => {
-    const start = afternoon(Date.now(), 1, 18); // tomorrow evening, 45 min with Sample stylist C
+    const start = afternoon(await env.currentTimeMs(), 1, 18); // tomorrow evening, 45 min with Sample stylist C
     const h = await env.client.workflow.start(openingWorkflow, { workflowId: "t3", taskQueue: "test", args: [opening("t3", "Sample stylist C", start, 45)] });
     const first = await until(h, (s) => s.offers.some((o) => o.outcome === "holding the offer"));
     const row = first.offers.find((o) => o.outcome === "holding the offer")!;
@@ -119,7 +126,7 @@ test("tomorrow's opening waits 1 hour per person; nobody accepts -> staff told i
 
 test("staff can book someone by hand, and can stop an opening", async () => {
   await withEnv(async (env) => {
-    const start = afternoon(Date.now(), 0, 23);
+    const start = afternoon(await env.currentTimeMs(), 0);
     const h = await env.client.workflow.start(openingWorkflow, { workflowId: "t4", taskQueue: "test", args: [opening("t4", "Lena", start, 60)] });
     await until(h, holding("Ava Brooks"));
     await h.signal(assignByHand, "c6");
@@ -131,5 +138,21 @@ test("staff can book someone by hand, and can stop an opening", async () => {
     await until(h2, (s) => s.offers.some((o) => o.outcome === "holding the offer"));
     await h2.signal(stopOpening);
     assert.equal((await until(h2, (s) => s.phase === "stopped by staff")).phase, "stopped by staff");
+  });
+});
+
+test("one booking per client: a client holding one opening isn't offered or booked by hand into another", async () => {
+  await withEnv(async (env) => {
+    const now = await env.currentTimeMs();
+    const a = await env.client.workflow.start(openingWorkflow, { workflowId: "t6a", taskQueue: "test", args: [opening("t6a", "Lena", afternoon(now, 0), 60)] });
+    await until(a, holding("Ava Brooks"));
+    const b = await env.client.workflow.start(openingWorkflow, { workflowId: "t6b", taskQueue: "test", args: [opening("t6b", "Lena", afternoon(now, 0, 15), 60)] });
+    const s = await until(b, holding("Ben Carter"));
+    assert.equal(s.skipped.find((k) => k.name === "Ava Brooks")?.reason, "Currently holding another opening");
+    await b.signal(assignByHand, "c1");
+    const after = await until(b, (x) => x.notices.some((n) => n.startsWith("Couldn't book Ava Brooks by hand")));
+    assert.equal(after.phase, "offering");
+    assert.equal((await a.executeUpdate(clientReply, { args: [{ clientId: "c1", answer: "yes" }] })).outcome, "booked");
+    assert.equal((await until(a, (x) => x.phase === "filled")).booked?.name, "Ava Brooks");
   });
 });

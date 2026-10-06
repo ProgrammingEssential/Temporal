@@ -97,6 +97,7 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
   const finishedOffering = () => stopRequested || bookedId !== undefined || manualId !== undefined;
   let matchedAnyone = false;
 
+  for (;;) {
   while (!finishedOffering()) {
     if (now() >= input.startMs) {
       status.phase = "opening time passed";
@@ -114,10 +115,10 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
     if (!next) break;
     matchedAnyone = true;
 
+    if (!(await setHold(next.id, input.openingId))) continue; // just claimed by another opening: re-check the list
     const row: OfferRow = { clientId: next.id, name: next.name, phone: next.phone, service: next.service, outcome: "texting" };
     status.offers.push(row);
     status.message = `Texting ${next.name}.`;
-    await setHold(next.id, input.openingId);
     const offeredAt = now();
     const holdUntil = Math.min(offeredAt + holdMs(offeredAt, input), input.startMs);
     try {
@@ -149,6 +150,17 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
           : "no reply - timed out"; // R24: stays on the list
     }
     if (bookedId !== next.id) await clearHold(next.id, input.openingId);
+  }
+  // One booking per client: staff can only book someone still on the list and not holding another opening.
+  if (bookedId === undefined && !stopRequested && manualId !== undefined) {
+    const chosen = (await loadWaitlist()).find((c) => c.id === manualId);
+    if (!chosen || (chosen.heldByOpening && chosen.heldByOpening !== input.openingId)) {
+      status.notices.push(`Couldn't book ${chosen?.name ?? "that client"} by hand: ${chosen ? "they're holding another opening right now" : "they're no longer on the waitlist"}. Carrying on with the list.`);
+      manualId = undefined;
+      continue;
+    }
+  }
+  break;
   }
 
   const book = async (clientId: string, by: "client" | "staff") => {

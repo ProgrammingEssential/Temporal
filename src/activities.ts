@@ -23,8 +23,12 @@ export async function loadWaitlist(): Promise<LiveClient[]> {
   return getWaitlist().map((c) => ({ ...c, heldByOpening: holds[c.id] }));
 }
 
-export async function setHold(clientId: string, openingId: string): Promise<void> {
-  saveHolds({ ...getHolds(), [clientId]: openingId });
+/** Claims the client for this opening. False if another opening already holds them (one offer at a time per client). */
+export async function setHold(clientId: string, openingId: string): Promise<boolean> {
+  const holds = getHolds();
+  if (holds[clientId] && holds[clientId] !== openingId) return false;
+  saveHolds({ ...holds, [clientId]: openingId });
+  return true;
 }
 
 export async function clearHold(clientId: string, openingId: string): Promise<void> {
