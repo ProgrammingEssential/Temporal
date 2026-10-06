@@ -3,31 +3,74 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Temporal assessment starter</title>
+    <title>Juniper Salon openings</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <header>
+      <div>
+        <p class="eyebrow">Juniper Salon</p>
+        <h1>Last-minute openings</h1>
+      </div>
+      <p class="banner">
+        Prototype. Texts are <strong>simulated</strong> (shown on the pretend phone, never sent). Clients are made-up
+        samples. Stylist names other than Lena are samples: replace with yours.
+      </p>
+    </header>
+
     <main>
-      <p class="eyebrow">Temporal assessment starter</p>
-      <h1>Your environment is connected.</h1>
-      <p class="intro">
-        This neutral demonstration starts a Workflow, waits durably for a
-        Signal, and then completes. Replace it with the experience your
-        customer needs.
-      </p>
-      <section class="card">
-        <h2 id="phase">Ready</h2>
-        <p id="message">Start the demonstration to verify the setup.</p>
-        <button id="start">Start demo Workflow</button>
-        <button id="continue" hidden>Send continue Signal</button>
-        <p class="request-id" id="request-id"></p>
+      <section class="staff">
+        <div class="card">
+          <h2>New opening <span class="hint">(for Lena and Carla, after a cancellation in Square)</span></h2>
+          <form id="new-opening">
+            <label>Stylist <select id="stylist"></select></label>
+            <label>Starts <input id="start" type="datetime-local" required /></label>
+            <label>Length
+              <select id="length">
+                <option value="45">45 min</option>
+                <option value="60" selected>1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+                <option value="180">3 hours</option>
+              </select>
+            </label>
+            <button type="submit">Start filling it</button>
+          </form>
+          <p class="hint">
+            The system texts one matching client at a time, earliest on the waitlist first, and holds the opening for
+            them: 15 minutes for a same-day opening, 1 hour for tomorrow or later. No reply or a no: it moves on by
+            itself, and they stay on the list.
+          </p>
+          <p id="form-error" class="error"></p>
+        </div>
+
+        <div id="openings"></div>
+
+        <div class="card">
+          <h2>Waitlist <span class="hint">(sample clients, standing in for the Google Sheet)</span></h2>
+          <table>
+            <thead><tr><th>Joined</th><th>Name</th><th>Mobile</th><th>Service</th><th>Preferred stylist</th><th>Available</th></tr></thead>
+            <tbody id="waitlist"></tbody>
+          </table>
+          <button id="reset" class="ghost">Reset sample data</button>
+        </div>
       </section>
-      <p class="footer">
-        Inspect the execution at
-        <a href="http://localhost:8233" target="_blank">localhost:8233</a>.
-      </p>
+
+      <aside class="phone-wrap">
+        <div class="phone">
+          <p class="phone-title">Client's phone <span class="tag">simulated</span></p>
+          <label>Viewing as <select id="phone-client"></select></label>
+          <div id="messages" class="messages"></div>
+          <div class="reply-buttons">
+            <button data-answer="yes">Reply YES</button>
+            <button data-answer="no" class="secondary">Reply NO</button>
+            <button data-answer="stop" class="ghost">Reply STOP</button>
+          </div>
+          <p id="reply-result" class="reply-result"></p>
+        </div>
+        <p class="hint">See every step in the Temporal Web UI at <a href="http://localhost:8233" target="_blank">localhost:8233</a>.</p>
+      </aside>
     </main>
     <script src="/app.js"></script>
   </body>
 </html>
-

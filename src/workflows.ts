@@ -157,15 +157,15 @@ export async function openingWorkflow(input: OpeningInput): Promise<OpeningStatu
     const client = live.find((c) => c.id === clientId);
     const who = { clientId, name: client?.name ?? offer?.name ?? clientId, phone: client?.phone ?? offer?.phone ?? "", service: (client?.service ?? offer?.service) as Service };
     await bookClient(clientId); // R43: comes off the waitlist
-    status.phase = "filled";
     status.booked = { clientId, name: who.name, service: who.service, by };
-    status.message = `Booked: ${who.name} (${who.service}) with ${input.stylist} on ${when}.`;
     try {
       await text(who, "confirmation", confirmationText(who.service, input)); // R44: automatic confirmation
       status.notices.push(`Booked ${who.name} for ${who.service.toLowerCase()} with ${input.stylist} on ${when}${by === "staff" ? " (by staff)" : ""}. Confirmation text sent. ${input.stylist}'s chair is filled.`);
     } catch {
       status.notices.push(`Booked ${who.name} with ${input.stylist} on ${when}, but the confirmation text didn't go through: please call them.`);
     }
+    status.message = `Booked: ${who.name} (${who.service}) with ${input.stylist} on ${when}.`;
+    status.phase = "filled";
   };
 
   if (bookedId !== undefined) await book(bookedId, "client");
